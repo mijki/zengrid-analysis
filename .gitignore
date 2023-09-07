@@ -1,6 +1,7 @@
 # Folders to ignore
-zengriddataenv/
+.venv-zenalysis/
 src/
+data/
 
 # Files to ignore
 *.pyc
