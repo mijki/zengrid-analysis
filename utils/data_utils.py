@@ -3,7 +3,31 @@ import pandas as pd
 import os
 
 
-# Define a function to read a data file into a pandas DataFrame based on its extension
+# Reads data from .env file
+def load_dotenv():
+    """
+    Reads data from .env file
+
+    Returns:
+    - dict: A dictionary containing the data from the .env file.
+    """
+    dotenv_path = os.path.join(os.getcwd(), ".env")
+    dotenv_dict = {}
+
+    with open(dotenv_path, "r") as dotenv_file:
+        for line in dotenv_file:
+            line = line.strip()
+
+            if line.startswith("#") or not line:
+                continue
+
+            key, value = line.split("=", 1)
+            dotenv_dict[key] = value
+
+    return dotenv_dict
+
+
+# Read a data file into a pandas DataFrame based on its extension.
 def read_data_file(file_path, **kwargs):
     """
     Read a data file into a pandas DataFrame based on its extension.
@@ -15,29 +39,24 @@ def read_data_file(file_path, **kwargs):
     - DataFrame: The data loaded into a pandas DataFrame.
     """
 
-    # Get file extension
+    extension_read_function_mapping = {
+        ".csv": pd.read_csv,
+        ".xlsx": pd.read_excel,
+        ".xls": pd.read_excel,
+        ".tsv": lambda x, **y: pd.read_csv(x, delimiter="\t", **y),
+        ".json": pd.read_json,
+        ".parquet": pd.read_parquet,
+        ".feather": pd.read_feather,
+        ".dta": pd.read_stata,
+        ".pkl": pd.read_pickle,
+        ".sas7bdat": pd.read_sas,
+    }
+
     _, file_extension = os.path.splitext(file_path)
 
-    # Read data based on file extension
-    if file_extension == ".csv":
-        return pd.read_csv(file_path, **kwargs)
-    elif file_extension in [".xlsx", ".xls"]:
-        return pd.read_excel(file_path, **kwargs)
-    elif file_extension == ".tsv":
-        return pd.read_csv(file_path, delimiter="\t", **kwargs)
-    elif file_extension == ".json":
-        return pd.read_json(file_path, **kwargs)
-    elif file_extension == ".parquet":
-        return pd.read_parquet(file_path, **kwargs)
-    elif file_extension == ".feather":
-        return pd.read_feather(file_path, **kwargs)
-    elif file_extension == ".msgpack":
-        return pd.read_msgpack(file_path, **kwargs)
-    elif file_extension == ".dta":
-        return pd.read_stata(file_path, **kwargs)
-    elif file_extension == ".pkl":
-        return pd.read_pickle(file_path, **kwargs)
-    elif file_extension == ".sas7bdat":
-        return pd.read_sas(file_path, **kwargs)
-    else:
+    read_function = extension_read_function_mapping.get(file_extension)
+
+    if read_function is None:
         raise ValueError(f"Unsupported file extension: {file_extension}.")
+
+    return read_function(file_path, **kwargs)

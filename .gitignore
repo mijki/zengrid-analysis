@@ -1,6 +1,6 @@
 # Folders to ignore
 .venv-zenalysis/
-src/
+.vscode/
 data/
 
 # Files to ignore
@@ -9,4 +9,4 @@ __pycache__/
 *.ipynb_checkpoints/
 
 # Environment files to ignore
-.env
+.env*
