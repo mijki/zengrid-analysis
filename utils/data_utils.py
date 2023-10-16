@@ -5,7 +5,7 @@
 # -----------------------
 import pandas as pd
 import os
-import datetime as dt
+import datetime
 import csv
 
 # -----------------------
@@ -98,69 +98,65 @@ def read_csv_auto_delimiter(filepath, **kwargs):
 
 # Reshapes the DataFrame to the desired format
 def eon_dataframe(df):
-    # Filter rows where "Mertekegys" column is "kWh"
+    # Embedded function to generate time intervals
+    def generate_time_intervals():
+        """Generate a list of 15-minute intervals for 24 hours."""
+        start_time = datetime.datetime.strptime("00:00", "%H:%M")
+        intervals = []
+        for _ in range(96):  # 96 intervals in a day
+            end_time = start_time + datetime.timedelta(minutes=15)
+            interval = f"{start_time.strftime('%H:%M')} - {end_time.strftime('%H:%M')}"
+            intervals.append(interval)
+            start_time = end_time
+        return intervals
+
+    # Filter on kWh in "Mertekegys" column
     df_filtered = df[df["Mertekegys"] == "kWh"]
 
     # Drop columns "SXX", "OBIS", and "Szorzo"
     columns_to_drop = [
         col
-        for col in df_filtered.columns
+        for col in df.columns
         if col.startswith("S") or col in ["OBIS", "Szorzo", "Mertekegys"]
     ]
-    df_filtered = df_filtered.drop(columns=columns_to_drop)
+    df_filtered = df_filtered.drop(
+        columns=columns_to_drop, errors="ignore"
+    )  # Use errors='ignore' to handle non-existent columns
 
-    # Convert "Datum" column to datetime format
-    df_filtered["Datum"] = pd.to_datetime(df_filtered["Datum"])
+    # Transformation logic
+    result_data = []
 
-    # Melt the dataframe
-    melted_df = df_filtered.melt(
-        id_vars=["MP", "Datum"],
-        value_vars=[
-            col
-            for col in df_filtered.columns
-            if col.startswith("A")
-            and len(col) >= 4
-            and col[1:3].isdigit()
-            and col[3:].isdigit()
-            and int(col[1:3]) <= 23
-            and int(col[3:]) < 4
-        ],
-        var_name="Time_Slice",
-        value_name="Value",
-    )
+    # Define the column indices for Datum, MP, and AXX columns
+    datum_col_idx = 0
+    mp_col_idx = 1
+    a_col_start_idx = 2  # Adjusted index due to dropped columns
 
-    print(melted_df.head())
-    print(melted_df.columns)
+    for _, row in df_filtered.iterrows():
+        # Modify the date format to "YYYY.MM.DD"
+        date_str = datetime.datetime.fromisoformat(
+            row[datum_col_idx].split("T")[0]
+        ).strftime("%Y.%m.%d")
+        for i, interval in enumerate(generate_time_intervals()):
+            a_col_idx = a_col_start_idx + i  # Indexing directly into AXX columns
+            result_data.append(
+                {"Datum": f"{date_str} {interval}", row[mp_col_idx]: row[a_col_idx]}
+            )
 
-    # Convert 'A00', 'A01', etc. to actual time intervals
-    def get_time_interval(row):
-        slice_name = row["Time_Slice"]
-        date = row["Datum"]
-        hour = int(slice_name[1:3])
-        minute = 15 * (int(slice_name[3:]) if slice_name[3:] else 0)
-        start_time = date.replace(
-            hour=hour, minute=minute, second=0, microsecond=0
-        ).strftime("%H:%M")
-        end_time = (
-            (date + pd.Timedelta(minutes=15))
-            .replace(hour=hour, minute=minute, second=0, microsecond=0)
-            .strftime("%H:%M")
-        )
-        return start_time + " - " + end_time
+    # Convert the list of dictionaries to a DataFrame
+    result_df = pd.DataFrame(result_data)
 
-    melted_df["Időszeletek"] = melted_df.apply(get_time_interval, axis=1)
+    # Reorder columns
+    result_df = result_df[
+        ["Datum"] + [col for col in result_df.columns if col != "Datum"]
+    ]
 
-    # Drop "Datum" and "Time_Slice" columns as they are no longer needed
-    melted_df = melted_df.drop(columns=["Datum", "Time_Slice"])
+    # Rename 'Datum' to 'Időszeletek'
+    result_df = result_df.rename(columns={"Datum": "Időszeletek"})
 
-    reshaped_df = melted_df.pivot_table(
-        index="Időszeletek", columns="MP", values="Value", aggfunc="sum"
-    ).reset_index()
+    # Display the first few rows
+    print(result_df.head(15))
 
-    # Sorting the Időszeletek column to maintain chronological order
-    reshaped_df = reshaped_df.sort_values(by="Időszeletek").reset_index(drop=True)
-
-    return reshaped_df
+    return result_df
 
 
 # Load and preprocess the data based on file type
