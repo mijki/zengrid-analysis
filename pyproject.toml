@@ -6,7 +6,7 @@ authors = ["Kiss Miklós <mijki95@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.12"
 asttokens = "^2.4.0"
 backcall = "^0.2.0"
 bokeh = "*"

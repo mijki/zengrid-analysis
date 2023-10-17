@@ -39,6 +39,11 @@ Or on Windows:
 (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | python -
 ```
 
+If you have ***pip*** installed you can use:
+```bash
+pip install poetry
+```
+
 ### 3. Install Dependencies
 
 With poetry installed, you can install the dependencies for the project using the following command:
