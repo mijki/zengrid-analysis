@@ -38,6 +38,30 @@ def load_dotenv():
 
 
 # -----------------------
+# JUPYTER DATAFRAME RELATED UTILITIES
+# -----------------------
+
+
+# Display basic information about a dataframe
+def inspect_dataframe(df, n_rows=5):
+    """
+    Display basic information about a dataframe.
+
+    Parameters:
+    - df (pd.DataFrame): DataFrame to inspect.
+    - n_rows (int, optional): Number of rows to display from the dataframe's head. Default is 5.
+    """
+    print("Head of DataFrame:")
+    print(df.head(n_rows))
+    print("\nColumns in DataFrame:")
+    print(df.columns)
+    print("\nData Types in DataFrame:")
+    print(df.dtypes)
+    print("\nNumber of Missing Values in DataFrame:")
+    print(df.isnull().sum())
+
+
+# -----------------------
 # DATA READING UTILITIES
 # -----------------------
 
@@ -89,6 +113,40 @@ def read_csv_auto_delimiter(filepath, **kwargs):
         else:
             delimiter = ","
         return pd.read_csv(filepath, sep=delimiter, **kwargs)
+
+
+# -----------------------
+# DATA WRITING UTILITIES
+# -----------------------
+# Export a DataFrame to an Excel file
+def export_dataframe_to_excel(df, df_name, export_file_path, custom_file_name=None):
+    """
+    Exports a DataFrame to an Excel file.
+
+    Parameters:
+    - df (pd.DataFrame): DataFrame to export.
+    - df_name (str): Name of the DataFrame (used in default file naming).
+    - custom_file_name (str, optional): Custom file name for the Excel file. If not provided, a default name is generated.
+
+    Returns:
+    - str: The path of the exported Excel file.
+    """
+    # Check if the directory exists, if not, create it
+    if not os.path.exists(export_file_path):
+        os.makedirs(export_file_path)
+
+    if custom_file_name:
+        file_name = custom_file_name
+    else:
+        current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        file_name = f"{df_name}_{current_time}.xlsx"
+
+    file_path = os.path.join(export_file_path, file_name)
+
+    df.to_excel(file_path, index=False)
+
+    print(f"DataFrame exported to: {file_path}")
+    return file_path
 
 
 # -----------------------
