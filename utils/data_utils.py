@@ -7,6 +7,7 @@ import pandas as pd
 import os
 import datetime
 import csv
+from IPython.display import display
 
 # -----------------------
 # ENVIRONMENT UTILITIES
@@ -52,13 +53,22 @@ def inspect_dataframe(df, n_rows=5):
     - n_rows (int, optional): Number of rows to display from the dataframe's head. Default is 5.
     """
     print("Head of DataFrame:")
-    print(df.head(n_rows))
+    display(df.head(n_rows))  # Using display for a prettier output in Jupyter
+    
     print("\nColumns in DataFrame:")
     print(df.columns)
+    
     print("\nData Types in DataFrame:")
     print(df.dtypes)
+    
     print("\nNumber of Missing Values in DataFrame:")
     print(df.isnull().sum())
+    
+    print("\nStatistical Summary of DataFrame:")
+    display(df.describe())  # Using display for a prettier output in Jupyter
+    
+    print("\nConcise Summary of DataFrame:")
+    df.info()
 
 
 # -----------------------
