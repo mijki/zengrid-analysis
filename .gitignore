@@ -2,6 +2,7 @@
 .venv-zenalysis/
 .vscode/
 data/
+exports/
 
 # Files to ignore
 *.pyc
